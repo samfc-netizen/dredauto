@@ -312,14 +312,12 @@ if not os.path.exists(CAMINHO_LOCAL):
     except Exception:
         pass
     st.stop()
-
-try:
-    EXCEL_XLS = pd.ExcelFile(CAMINHO_LOCAL)
-df_fat = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_FAT)
+   try:
+    df_fat = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_FAT)
     df_imp = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_IMP)
     df_dre = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_DRE)
 except Exception as e:
-    st.error(f"Erro lendo as abas do Excel: {e}")
+    st.error(f"Erro ao ler o arquivo Excel: {e}")
     st.stop()
 
 df_fat.columns = [str(c).strip() for c in df_fat.columns]
