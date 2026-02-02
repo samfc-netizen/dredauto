@@ -6,15 +6,14 @@ import streamlit as st
 import plotly.express as px
 
 # ============================================================
-# CONFIG
+# CONFIG / ARQUIVO EXCEL (REPOSITÓRIO)
 # ============================================================
-# No Streamlit Cloud, o Excel deve estar no próprio repositório.
-# Para atualizar os dados, basta substituir/commitar o Excel no GitHub.
+# No Streamlit Community Cloud/GitHub não existe caminho local (ex.: C:\Users\...).
+# Coloque o arquivo .xlsx NA MESMA PASTA deste app.py e mantenha o nome abaixo.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_EXCEL = "BASE DRE DAUTO TINTAS.xlsx"
-
-# Caminho absoluto do diretório do app (compatível com Streamlit Cloud)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
 CAMINHO_LOCAL = os.path.join(BASE_DIR, ARQUIVO_EXCEL)
+
 
 SHEET_FAT = "CMV E FATURAMENTO"
 SHEET_IMP = "IMPOSTOS E FOLHA"
@@ -302,22 +301,28 @@ def drill_despesas_unique_codigo(
 st.set_page_config(page_title="DRE Lojas- Dauto Tintas", layout="wide")
 st.title("DRE Lojas Dauto Tintas")
 
-# ====== EXCEL (ARQUIVO NO REPOSITÓRIO) ======
+# ====== EXCEL (REPOSITÓRIO) ======
 if not os.path.exists(CAMINHO_LOCAL):
-    st.error("Arquivo Excel não encontrado no repositório do app.")
-    st.code(f"Esperado em: {CAMINHO_LOCAL}")
+    st.error(f"""Arquivo Excel não encontrado na pasta do app.
+
+➡️ Coloque o arquivo .xlsx no MESMO repositório/pasta do app e faça commit.
+Nome esperado: {ARQUIVO_EXCEL}
+""")
+    st.code(CAMINHO_LOCAL)
     try:
-        st.write("Arquivos disponíveis na pasta do app:")
-        st.write(sorted(os.listdir(BASE_DIR)))
+        st.write("Arquivos encontrados nesta pasta:")
+        st.write(sorted([f for f in os.listdir(BASE_DIR) if not f.startswith('.')]))
     except Exception:
         pass
     st.stop()
-   try:
-    df_fat = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_FAT)
-    df_imp = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_IMP)
-    df_dre = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_DRE)
+
+
+try:
+    df_fat = pd.read_excel(CAMINHO_LOCAL, sheet_name=SHEET_FAT)
+    df_imp = pd.read_excel(CAMINHO_LOCAL, sheet_name=SHEET_IMP)
+    df_dre = pd.read_excel(CAMINHO_LOCAL, sheet_name=SHEET_DRE)
 except Exception as e:
-    st.error(f"Erro ao ler o arquivo Excel: {e}")
+    st.error(f"Erro lendo as abas do Excel: {e}")
     st.stop()
 
 df_fat.columns = [str(c).strip() for c in df_fat.columns]
@@ -844,8 +849,8 @@ def _coerce_money_series(s: pd.Series) -> pd.Series:
     tmp = tmp.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
     return pd.to_numeric(tmp, errors="coerce").fillna(0.0)
 
-def _read_wide_sheet(sheet_name: str, xls: pd.ExcelFile) -> pd.DataFrame:
-    df = pd.read_excel(xls, sheet_name=sheet_name)
+def _read_wide_sheet(sheet_name: str) -> pd.DataFrame:
+    df = pd.read_excel(CAMINHO_LOCAL, sheet_name=sheet_name)
     df.columns = [str(c).strip() for c in df.columns]
     return df
 
@@ -949,7 +954,7 @@ else:
     # 1) RECEBIMENTOS (Drill) + Totais
     # --------------------------------------------------------
     try:
-        df_receb_wide = _read_wide_sheet("RECEBIMENTOS", EXCEL_XLS)
+        df_receb_wide = _read_wide_sheet("RECEBIMENTOS")
     except Exception as e:
         st.error(f"Erro ao ler a aba RECEBIMENTOS: {e}")
         df_receb_wide = None
@@ -978,13 +983,13 @@ else:
     # 2) COMPRAS LÍQUIDAS (Drill) = COMPRAS - DEVOLUÇÕES (competência M-1)
     # --------------------------------------------------------
     try:
-        df_compras_wide = _read_wide_sheet("COMPRAS", EXCEL_XLS)
+        df_compras_wide = _read_wide_sheet("COMPRAS")
     except Exception as e:
         st.error(f"Erro ao ler a aba COMPRAS: {e}")
         df_compras_wide = None
 
     try:
-        df_devol_wide = _read_wide_sheet("DEVOLUÇÕES", EXCEL_XLS)
+        df_devol_wide = _read_wide_sheet("DEVOLUÇÕES")
     except Exception as e:
         st.error(f"Erro ao ler a aba DEVOLUÇÕES: {e}")
         df_devol_wide = None
@@ -1208,8 +1213,6 @@ else:
             # negrito em toda a linha Resultado Caixa (inclui % também)
             styles = [s + " font-weight: 700;" if s else "font-weight: 700;" for s in styles]
             return styles
-
-        table_dfc = table_dfc.reset_index(drop=True)
 
         sty = table_dfc.style
 
