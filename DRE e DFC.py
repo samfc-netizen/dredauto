@@ -8,9 +8,13 @@ import plotly.express as px
 # ============================================================
 # CONFIG
 # ============================================================
-# No Streamlit Cloud / GitHub, não existe caminho local do Windows.
-# Por isso, o arquivo Excel será enviado via upload (file_uploader).
-ARQUIVO_EXCEL = "BASE DRE DAUTO TINTAS.xlsx"  # nome esperado (referência)
+# No Streamlit Cloud, o Excel deve estar no próprio repositório.
+# Para atualizar os dados, basta substituir/commitar o Excel no GitHub.
+ARQUIVO_EXCEL = "BASE DRE DAUTO TINTAS.xlsx"
+
+# Caminho absoluto do diretório do app (compatível com Streamlit Cloud)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+CAMINHO_LOCAL = os.path.join(BASE_DIR, ARQUIVO_EXCEL)
 
 SHEET_FAT = "CMV E FATURAMENTO"
 SHEET_IMP = "IMPOSTOS E FOLHA"
@@ -298,20 +302,20 @@ def drill_despesas_unique_codigo(
 st.set_page_config(page_title="DRE Lojas- Dauto Tintas", layout="wide")
 st.title("DRE Lojas Dauto Tintas")
 
-# ====== EXCEL (UPLOAD) ======
-uploaded_file = st.sidebar.file_uploader(
-    "Envie o arquivo Excel BASE (DRE/DFC)",
-    type=["xlsx"],
-    help="Envie o Excel para carregar o DRE e o DFC. No Streamlit Cloud não existe caminho local do Windows.",
-)
-
-if uploaded_file is None:
-    st.info("Envie o arquivo Excel (.xlsx) no menu lateral para carregar o DRE/DFC.")
+# ====== EXCEL (ARQUIVO NO REPOSITÓRIO) ======
+if not os.path.exists(CAMINHO_LOCAL):
+    st.error("Arquivo Excel não encontrado no repositório do app.")
+    st.code(f"Esperado em: {CAMINHO_LOCAL}")
+    try:
+        st.write("Arquivos disponíveis na pasta do app:")
+        st.write(sorted(os.listdir(BASE_DIR)))
+    except Exception:
+        pass
     st.stop()
 
 try:
-    EXCEL_XLS = pd.ExcelFile(uploaded_file)
-    df_fat = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_FAT)
+    EXCEL_XLS = pd.ExcelFile(CAMINHO_LOCAL)
+df_fat = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_FAT)
     df_imp = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_IMP)
     df_dre = pd.read_excel(EXCEL_XLS, sheet_name=SHEET_DRE)
 except Exception as e:
