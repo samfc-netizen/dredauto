@@ -1091,7 +1091,7 @@ def pagina_financeiro():
         st.markdown("---")
         st.subheader("DFC — Tabela Geral (Valores e Percentuais sobre Recebimento)")
 
-        if "df_dre" not in globals() or df_dre is None or df_dre.empty:
+        if df_dre is None or df_dre.empty:
             st.error("A aba DRE (df_dre) não está carregada. O DFC precisa dela.")
         else:
             dedu_dfc_m = sum_monthly_conta_codigo(df_dre, COL_CONTA_DRE, COD_00004, COL_VAL_DRE, loja_dre, lojas_sel, mes_dre, month_offset=0)
